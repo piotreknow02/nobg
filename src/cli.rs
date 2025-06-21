@@ -4,7 +4,7 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "nobg")]
 #[command(version, about="", long_about = None)]
-struct Args {
+pub struct Args {
     #[command(subcommand)]
     cmd: Option<TopLevelSumbommands>,
 
@@ -16,6 +16,7 @@ struct Args {
 #[derive(Subcommand, Debug)]
 enum TopLevelSumbommands {
     Model {
+        #[command(subcommand)]
         cmd: ModelSumcommands,
     },
     WebUI {
