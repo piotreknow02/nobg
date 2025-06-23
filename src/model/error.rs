@@ -2,7 +2,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Cannot access the app directory {}")]
+    #[error("Cannot access the app directory")]
     FailedToGetBaseDir,
 
     #[error("Model {0} has allready been downloaded")]
@@ -10,4 +10,7 @@ pub enum Error {
 
     #[error("Request error: {0}")]
     ReqwestError(#[from] reqwest::Error),
+
+    #[error("Cannot save model in {0}")]
+    ModelSaveIOError(#[from] std::io::Error),
 }

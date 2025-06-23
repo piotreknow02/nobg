@@ -1,6 +1,16 @@
+use crate::model::types::RembgModel;
 
-static modelsList: [RembgModel] = [
-    RembgModel { name = "", remote_url = "" },
-    RembgModel { name = "", remote_url = "" },
-    RembgModel { name = "", remote_url = "" },
+pub static MODELS: &[RembgModel] = &[
+    RembgModel {
+        name: "",
+        remote_url: "",
+    },
+    RembgModel {
+        name: "",
+        remote_url: "",
+    },
+    RembgModel {
+        name: "",
+        remote_url: "",
+    },
 ];

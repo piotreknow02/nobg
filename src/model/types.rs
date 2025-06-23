@@ -3,12 +3,16 @@ use directories::BaseDirs;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
-use std::{fs::File, path::Path, path::PathBuf};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+};
 
 #[derive(Debug)]
 pub struct RembgModel {
-    name: &'static str,
-    remote_url: &'static str,
+    pub name: &'static str,
+    pub remote_url: &'static str,
 }
 
 impl RembgModel {

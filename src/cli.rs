@@ -3,14 +3,14 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "nobg")]
-#[command(version, about="", long_about = None)]
+#[command(version, about="A cli for rembg models", long_about = None)]
 pub struct Args {
     #[command(subcommand)]
     cmd: Option<TopLevelSumbommands>,
 
     // model:
-    input: PathBuf,
-    output: PathBuf,
+    input: Option<PathBuf>,
+    output: Option<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -19,7 +19,7 @@ enum TopLevelSumbommands {
         #[command(subcommand)]
         cmd: ModelSumcommands,
     },
-    WebUI {
+    Webui {
         #[clap(short, long, default_value_t = 8080)]
         port: u16,
     },
