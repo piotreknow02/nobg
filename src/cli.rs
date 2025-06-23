@@ -8,7 +8,6 @@ pub struct Args {
     #[command(subcommand)]
     cmd: Option<TopLevelSumbommands>,
 
-    // model:
     input: Option<PathBuf>,
     output: Option<PathBuf>,
 }

@@ -13,6 +13,7 @@ use std::{
 pub struct RembgModel {
     pub name: &'static str,
     pub remote_url: &'static str,
+    pub description: Option<&'static str>,
 }
 
 impl RembgModel {
