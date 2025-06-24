@@ -8,6 +8,7 @@ use std::{
     io::{Read, Write},
     path::PathBuf,
 };
+use url::Url;
 
 #[derive(Debug)]
 pub struct RembgModel {
@@ -30,12 +31,32 @@ impl RembgModel {
         }
     }
 
-    fn get_path(&self) -> Result<PathBuf, Error> {
-        let config_dir = Self::get_config_dir()?;
-        Ok(config_dir.join(self.name))
+    fn check_exists(&self) -> bool {
+        match &self.get_path() {
+            Ok(v) => v.exists(),
+            Err(_) => false,
+        }
     }
 
-    pub fn download(&self) -> Result<(), Error> {
+    fn get_path(&self) -> Result<PathBuf, Error> {
+        let config_dir = Self::get_config_dir()?;
+        let filename = self.get_filename();
+        Ok(config_dir.join(filename))
+    }
+
+    fn get_filename(&self) -> String {
+        let parsed_url = match Url::parse(self.remote_url) {
+            Ok(u) => u,
+            Err(_) => unreachable!(),
+        };
+        parsed_url
+            .path_segments()
+            .and_then(|segments| segments.last())
+            .unwrap_or((self.name.to_owned() + ".onnx").as_ref())
+            .to_owned()
+    }
+
+    pub fn pull(&self) -> Result<(), Error> {
         if self.check_exists() {
             return Err(Error::ModelAllreadyDownloaded(self.name.to_owned()));
         }
@@ -80,10 +101,14 @@ impl RembgModel {
         Ok(())
     }
 
-    fn check_exists(&self) -> bool {
-        match &self.get_path() {
-            Ok(v) => v.exists(),
-            Err(_) => false,
+    pub fn rm(&self) -> Result<(), Error> {
+        let model_path = self.get_path()?;
+        match std::fs::remove_file(&model_path) {
+            Ok(_) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Error::ModelNotFound(
+                model_path.to_str().unwrap().to_owned(),
+            )),
+            Err(e) => Err(Error::ModelIOError(e)),
         }
     }
 }

@@ -789,6 +789,7 @@ dependencies = [
  "indicatif",
  "reqwest",
  "thiserror",
+ "url",
 ]
 
 [[package]]

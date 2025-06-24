@@ -12,5 +12,11 @@ pub enum Error {
     ReqwestError(#[from] reqwest::Error),
 
     #[error("Cannot save model in {0}")]
-    ModelSaveIOError(#[from] std::io::Error),
+    ModelIOError(#[from] std::io::Error),
+
+    #[error("Cannot parse url: {0}")]
+    ParseError(#[from] url::ParseError),
+
+    #[error("Model not found: {0}")]
+    ModelNotFound(String),
 }
