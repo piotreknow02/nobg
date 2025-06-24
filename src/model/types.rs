@@ -226,11 +226,10 @@ impl RembgModel {
     }
 
     pub fn rm(&self) -> Result<(), Error> {
-        println!("Removing model {}...", self.name);
         let model_path = self.get_path()?;
         match std::fs::remove_file(&model_path) {
             Ok(_) => {
-                println!("Complete");
+                println!("Model {} was removed", self.name);
                 Ok(())
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Error::ModelNotFound(
