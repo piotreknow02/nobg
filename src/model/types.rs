@@ -6,10 +6,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
-    fs::File,
-    fs::metadata,
+    fs::{File, metadata},
     io::{Read, Write},
     path::PathBuf,
+    sync::OnceLock,
     time::SystemTime,
 };
 use url::Url;
@@ -22,16 +22,25 @@ pub struct RembgModel {
 }
 
 impl RembgModel {
-    fn get_config_dir() -> Result<PathBuf, Error> {
-        if let Some(base_dirs) = BaseDirs::new() {
-            let config_dir = if cfg!(target_os = "windows") {
-                base_dirs.data_dir().join("nobg")
+    fn get_config_dir<'a>() -> Result<&'a PathBuf, Error> {
+        static CACHED_CONFIG: OnceLock<Option<PathBuf>> = OnceLock::new();
+
+        let config_dir = CACHED_CONFIG.get_or_init(|| -> Option<PathBuf> {
+            if let Some(base_dirs) = BaseDirs::new() {
+                let config_dir = if cfg!(target_os = "windows") {
+                    base_dirs.data_dir().join("nobg")
+                } else {
+                    base_dirs.home_dir().join(".nobg")
+                };
+                Some(config_dir)
             } else {
-                base_dirs.home_dir().join(".nobg")
-            };
-            Ok(config_dir)
-        } else {
-            Err(Error::FailedToGetBaseDir)
+                None
+            }
+        });
+
+        match config_dir {
+            Some(c) => Ok(c),
+            None => Err(Error::FailedToGetBaseDir),
         }
     }
 
