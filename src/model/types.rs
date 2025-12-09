@@ -7,6 +7,7 @@ use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
     fs::{File, metadata},
+    hint::unreachable_unchecked,
     io::{Read, Write},
     path::PathBuf,
     sync::OnceLock,
@@ -68,7 +69,7 @@ impl RembgModel {
     fn get_filename(&self) -> String {
         let parsed_url = match Url::parse(self.remote_url) {
             Ok(u) => u,
-            Err(_) => unreachable!(),
+            Err(_) => unsafe { unreachable_unchecked() },
         };
         parsed_url
             .path_segments()
