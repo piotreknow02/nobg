@@ -39,7 +39,7 @@ pub fn run_inference(input: Array4<f32>, model: &str) -> Result<Array4<f32>, Err
 }
 
 fn read_input(path: &str) -> Result<(Array4<f32>, DynamicImage), Error> {
-    let img = image::open(path).map_err(|e| Error::ImageError(e))?;
+    let img = image::open(path)?;
     let original = img.clone();
 
     let resized_img = img.resize_exact(320, 320, image::imageops::FilterType::Lanczos3);
@@ -69,13 +69,19 @@ fn read_input(path: &str) -> Result<(Array4<f32>, DynamicImage), Error> {
 }
 
 fn save_output(data: Array4<f32>, original: DynamicImage, path: &str) -> Result<(), Error> {
-    if !path.to_lowercase().ends_with(".png") {
-        return Err(Error::ImageError(image::ImageError::Unsupported(
-            image::error::UnsupportedError::from_format_and_kind(
-                image::ImageFormat::Jpeg.into(),
-                image::error::UnsupportedErrorKind::Color(image::ExtendedColorType::Rgba8),
-            ),
-        )));
+    let format = image::ImageFormat::from_path(path)?;
+
+    let supports_transparency = matches!(
+        format,
+        image::ImageFormat::Png
+            | image::ImageFormat::WebP
+            | image::ImageFormat::Gif
+            | image::ImageFormat::Tiff
+            | image::ImageFormat::Ico
+    );
+
+    if !supports_transparency {
+        return Err(Error::OutputFormatError);
     }
 
     let mask = data.mapv(|x| x.max(0.0).min(1.0));
@@ -101,7 +107,7 @@ fn save_output(data: Array4<f32>, original: DynamicImage, path: &str) -> Result<
         img_pixel[3] = mask_pixel[0];
     }
 
-    rgba_image.save(path).map_err(|e| Error::ImageError(e))?;
+    rgba_image.save(path)?;
 
     Ok(())
 }

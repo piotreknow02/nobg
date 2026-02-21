@@ -22,4 +22,7 @@ pub enum Error {
 
     #[error("Model not found: {0}")]
     ModelNotFound(String),
+
+    #[error("Output format does not support transparency. Use PNG, WebP, GIF, TIFF, or ICO.")]
+    OutputFormatError,
 }
