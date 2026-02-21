@@ -5,7 +5,7 @@ pub enum Error {
     #[error("Cannot access the app directory")]
     FailedToGetBaseDir,
 
-    #[error("Model {0} has allready been downloaded")]
+    #[error("Model {0} has already been downloaded")]
     ModelAllreadyDownloaded(String),
 
     #[error("Request error: {0}")]

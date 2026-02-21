@@ -6,7 +6,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
-    fs::{File, metadata},
+    fs::{metadata, File},
     hint::unreachable_unchecked,
     io::{Read, Write},
     path::PathBuf,
@@ -60,7 +60,7 @@ impl RembgModel {
         }
     }
 
-    fn get_path(&self) -> Result<PathBuf, Error> {
+    pub fn get_path(&self) -> Result<PathBuf, Error> {
         let config_dir = Self::get_config_dir()?;
         let filename = self.get_filename();
         Ok(config_dir.join(filename))

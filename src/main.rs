@@ -9,6 +9,7 @@ use crate::{
 
 mod cli;
 mod error;
+mod inference;
 mod model;
 
 fn main() -> Result<(), Error> {
@@ -42,9 +43,13 @@ fn model_subcommand(command: ModelSumcommands) -> Result<(), Error> {
 }
 
 fn run_model(model: String, input: PathBuf, output: PathBuf) -> Result<(), Error> {
-    todo!()
+    inference::commands::cli_run(
+        model,
+        input.to_string_lossy().to_string(),
+        output.to_string_lossy().to_string(),
+    )
 }
 
-fn run_webui(port: u16, expose: bool) -> Result<(), Error> {
+fn run_webui(_port: u16, _expose: bool) -> Result<(), Error> {
     todo!()
 }

@@ -8,7 +8,10 @@ chrono = "0.4.41"
 clap = { version = "4.5.40", features = ["derive"] }
 directories = "6.0.0"
 fmtsize = "0.1.2"
+image = "0.25.6"
 indicatif = "0.17.11"
+ndarray = "0.16.1"
+ort = "2.0.0-rc.6"
 reqwest = { version = "0.12.20", features = ["blocking"] }
 thiserror = "2.0.12"
 url = "2.5.4"
