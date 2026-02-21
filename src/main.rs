@@ -11,6 +11,7 @@ mod cli;
 mod error;
 mod inference;
 mod model;
+mod webui;
 
 fn main() -> Result<(), Error> {
     let args = cli::Args::parse();
@@ -50,6 +51,9 @@ fn run_model(model: String, input: PathBuf, output: PathBuf) -> Result<(), Error
     )
 }
 
-fn run_webui(_port: u16, _expose: bool) -> Result<(), Error> {
-    todo!()
+fn run_webui(port: u16, _expose: bool) -> Result<(), Error> {
+    tokio::runtime::Runtime::new()
+        .map_err(|e| Error::InferenceError(format!("Failed to create runtime: {}", e)))?
+        .block_on(webui::start(port))
+        .map_err(|e| Error::InferenceError(format!("WebUI error: {}", e)))
 }
