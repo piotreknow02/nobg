@@ -39,7 +39,6 @@ pub fn prune() {
     }
 }
 
-#[allow(dead_code)]
 pub fn get_path(name: &str) -> Result<PathBuf, Error> {
     let target_model = RembgModel::find_model(name);
     match target_model {

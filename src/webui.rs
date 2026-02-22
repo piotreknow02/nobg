@@ -1,13 +1,15 @@
 use axum::{
-    extract::Multipart,
-    routing::post,
     Router,
+    extract::Multipart,
+    routing::{get, post},
 };
 use base64::Engine;
+use bytes::Bytes;
 use std::net::SocketAddr;
 use tower_http::services::ServeDir;
 
 use crate::inference::commands as inference;
+use crate::model::registry::MODELS;
 use crate::model::types::RembgModel;
 
 pub async fn start(port: u16) -> Result<(), Box<dyn std::error::Error>> {
@@ -15,6 +17,7 @@ pub async fn start(port: u16) -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting webui at http://{}", addr);
 
     let app = Router::new()
+        .route("/api/models", get(list_models))
         .route("/api/remove-bg", post(remove_background))
         .fallback_service(ServeDir::new("webui"));
 
@@ -24,38 +27,66 @@ pub async fn start(port: u16) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+async fn list_models() -> axum::Json<Vec<ModelInfo>> {
+    let models: Vec<ModelInfo> = MODELS
+        .iter()
+        .map(|m| ModelInfo {
+            name: m.name.to_string(),
+            description: m.description.unwrap_or("").to_string(),
+            downloaded: m.check_exists(),
+        })
+        .collect();
+    axum::Json(models)
+}
+
 async fn remove_background(
     mut multipart: Multipart,
 ) -> Result<axum::Json<ApiResponse>, axum::Json<ApiResponse>> {
-    let field: axum::extract::multipart::Field<'_> = match multipart.next_field().await {
-        Ok(Some(field)) => field,
-        Ok(None) => {
+    let mut model_name: Option<String> = None;
+    let mut image_bytes: Option<Bytes> = None;
+    let mut extension = "png";
+
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+
+        if name == "model" {
+            if let Ok(text) = field.text().await {
+                if !text.is_empty() {
+                    model_name = Some(text);
+                }
+            }
+        } else if name == "image" {
+            let ct = field.content_type().unwrap_or("image/png");
+            extension = match ct {
+                "image/png" => "png",
+                "image/jpeg" | "image/jpg" => "jpg",
+                "image/webp" => "webp",
+                "image/gif" => "gif",
+                _ => "png",
+            };
+            if let Ok(bytes) = field.bytes().await {
+                image_bytes = Some(bytes);
+            }
+        }
+    }
+
+    let bytes = match image_bytes {
+        Some(b) => b,
+        None => {
             return Err(axum::Json(ApiResponse::error("No file provided")));
         }
-        Err(_) => {
-            return Err(axum::Json(ApiResponse::error("Invalid file upload")));
-        }
     };
 
-    let _file_name = field.file_name().unwrap_or("image.png").to_string();
-    let content_type = field.content_type().unwrap_or("image/png");
-    let extension = match content_type {
-        "image/png" => "png",
-        "image/jpeg" | "image/jpg" => "jpg",
-        "image/webp" => "webp",
-        "image/gif" => "gif",
-        _ => "png",
-    };
-    let bytes = match field.bytes().await {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return Err(axum::Json(ApiResponse::error("Failed to read file")));
-        }
+    let model_name = match model_name {
+        Some(m) => m,
+        None => MODELS
+            .iter()
+            .find(|m| m.check_exists())
+            .map(|m| m.name.to_string())
+            .unwrap_or_else(|| "silueta".to_string()),
     };
 
-    let model_name = "silueta";
-
-    let model_info = match RembgModel::find_model(model_name) {
+    let model_info = match RembgModel::find_model(&model_name) {
         Some(m) => m,
         None => {
             return Err(axum::Json(ApiResponse::error(&format!(
@@ -77,7 +108,7 @@ async fn remove_background(
 
     if !model_path.exists() {
         return Err(axum::Json(ApiResponse::error(
-            "Model not found. Please download it first using: nobg model pull silueta",
+            "Model not found. Please download a model first using: nobg model pull <name>",
         )));
     }
 
@@ -92,17 +123,15 @@ async fn remove_background(
         ))));
     }
 
-    let result = std::panic::catch_unwind(|| {
-        let _img = image::open(&input_path)?;
-        let (tensor, original) = prepare_input(&input_path.to_string_lossy())?;
-        let mask = inference::run_inference(tensor, model_name)?;
-        apply_transparency(mask, original, &output_path.to_string_lossy())
-    });
+    let _img = image::open(&input_path).map_err(|e| ApiResponse::error(&format!("Failed to open image: {}", e)))?;
+    let (tensor, original) = prepare_input(&input_path.to_string_lossy()).map_err(|e| ApiResponse::error(&format!("Failed to prepare input: {}", e)))?;
+    let mask = inference::run_inference(tensor, &model_name).map_err(|e| ApiResponse::error(&format!("Inference error: {}", e)))?;
+    let result = apply_transparency(mask, original, &output_path.to_string_lossy()).map_err(|e| ApiResponse::error(&format!("Failed to apply transparency: {}", e)));
 
     let _ = std::fs::remove_file(&input_path);
 
     match result {
-        Ok(Ok(())) => {
+        Ok(()) => {
             let output_bytes = match std::fs::read(&output_path) {
                 Ok(b) => b,
                 Err(e) => {
@@ -119,11 +148,7 @@ async fn remove_background(
 
             Ok(axum::Json(ApiResponse::success(base64_image)))
         }
-        Ok(Err(e)) => Err(axum::Json(ApiResponse::error(&format!(
-            "Processing error: {}",
-            e
-        )))),
-        Err(_) => Err(axum::Json(ApiResponse::error("Panic during processing"))),
+        Err(e) => Err(axum::Json(e)),
     }
 }
 
@@ -135,8 +160,7 @@ fn prepare_input(
     let img = image::open(path)?;
     let original = img.clone();
 
-    let resized_img =
-        img.resize_exact(320, 320, image::imageops::FilterType::Lanczos3);
+    let resized_img = img.resize_exact(320, 320, image::imageops::FilterType::Lanczos3);
 
     let img_data: Vec<f32> = resized_img
         .to_rgb8()
@@ -220,4 +244,11 @@ impl ApiResponse {
             error: Some(error.to_string()),
         }
     }
+}
+
+#[derive(serde::Serialize)]
+struct ModelInfo {
+    name: String,
+    description: String,
+    downloaded: bool,
 }
