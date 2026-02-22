@@ -12,6 +12,7 @@ mod error;
 mod inference;
 mod model;
 mod webui;
+mod webui_assets;
 
 fn main() -> Result<(), Error> {
     let args = cli::Args::parse();

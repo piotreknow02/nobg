@@ -1,25 +1,27 @@
 use axum::{
-    Router,
     extract::Multipart,
     routing::{get, post},
+    Router,
 };
+use axum_embed::ServeEmbed;
 use base64::Engine;
 use bytes::Bytes;
 use std::net::SocketAddr;
-use tower_http::services::ServeDir;
 
 use crate::inference::process::run_inference;
 use crate::model::registry::MODELS;
 use crate::model::types::RembgModel;
+use crate::webui_assets::Assets;
 
 pub async fn start(port: u16) -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("Starting webui at http://{}", addr);
 
+    let serve_assets = ServeEmbed::<Assets>::new();
     let app = Router::new()
         .route("/api/models", get(list_models))
         .route("/api/remove-bg", post(remove_background))
-        .fallback_service(ServeDir::new("webui"));
+        .fallback_service(serve_assets);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
