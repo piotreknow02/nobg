@@ -47,5 +47,8 @@ pub enum ModelSumcommands {
         #[clap(short, long, action)]
         quiet: bool,
     },
-    Prune,
+    Prune {
+        #[clap(short, long, action)]
+        yes: bool,
+    },
 }

@@ -1,3 +1,3 @@
 pub mod commands;
-mod error;
-mod types;
+pub mod error;
+pub mod process;

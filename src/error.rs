@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+use crate::inference::error::Error as InferenceError;
 use crate::model::error::Error as ModelError;
 
 #[derive(Error, Debug)]
@@ -9,7 +10,7 @@ pub enum Error {
     ModelError(#[from] ModelError),
 
     #[error("Inference error: {0}")]
-    InferenceError(String),
+    InferenceError(#[from] InferenceError),
 
     #[error("Web UI error: {0}")]
     WebUIError(String),

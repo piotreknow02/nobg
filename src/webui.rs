@@ -8,7 +8,7 @@ use bytes::Bytes;
 use std::net::SocketAddr;
 use tower_http::services::ServeDir;
 
-use crate::inference::commands as inference;
+use crate::inference::process::run_inference;
 use crate::model::registry::MODELS;
 use crate::model::types::RembgModel;
 
@@ -125,7 +125,7 @@ async fn remove_background(
 
     let _img = image::open(&input_path).map_err(|e| ApiResponse::error(&format!("Failed to open image: {}", e)))?;
     let (tensor, original) = prepare_input(&input_path.to_string_lossy()).map_err(|e| ApiResponse::error(&format!("Failed to prepare input: {}", e)))?;
-    let mask = inference::run_inference(tensor, &model_name).map_err(|e| ApiResponse::error(&format!("Inference error: {}", e)))?;
+    let mask = run_inference(tensor, &model_name).map_err(|e| ApiResponse::error(&format!("Inference error: {}", e)))?;
     let result = apply_transparency(mask, original, &output_path.to_string_lossy()).map_err(|e| ApiResponse::error(&format!("Failed to apply transparency: {}", e)));
 
     let _ = std::fs::remove_file(&input_path);

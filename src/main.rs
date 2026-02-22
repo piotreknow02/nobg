@@ -35,7 +35,7 @@ fn model_subcommand(command: ModelSumcommands) -> Result<(), Error> {
             all,
             quiet,
         } => Ok(model::commands::list(verbose, all, quiet)),
-        ModelSumcommands::Prune => Ok(model::commands::prune()),
+        ModelSumcommands::Prune { yes } => Ok(model::commands::prune(yes)),
     };
     match result {
         Ok(_) => Ok(()),
@@ -53,7 +53,7 @@ fn run_model(model: String, input: PathBuf, output: PathBuf) -> Result<(), Error
 
 fn run_webui(port: u16, _expose: bool) -> Result<(), Error> {
     tokio::runtime::Runtime::new()
-        .map_err(|e| Error::InferenceError(format!("Failed to create runtime: {}", e)))?
+        .map_err(|e| Error::WebUIError(format!("Failed to create runtime: {}", e)))?
         .block_on(webui::start(port))
-        .map_err(|e| Error::InferenceError(format!("WebUI error: {}", e)))
+        .map_err(|e| Error::WebUIError(format!("WebUI error: {}", e)))
 }

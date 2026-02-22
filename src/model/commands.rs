@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use crate::model::{error::Error, registry::MODELS, types::RembgModel};
 
 pub fn list(verbose: bool, all: bool, quiet: bool) {
@@ -32,24 +30,18 @@ pub fn rm(name: &str) -> Result<(), Error> {
     }
 }
 
-pub fn prune() {
-    // todo!("Add conformation message here, don't display if -y flag");
+pub fn prune(yes: bool) {
+    if !yes {
+        println!("This will remove all downloaded models. Would you like to continue? [y/N]");
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).ok();
+        if !input.trim().eq_ignore_ascii_case("y") {
+            println!("Aborted.");
+            return;
+        }
+    }
+
     for m in MODELS {
         let _ = m.rm();
-    }
-}
-
-pub fn get_path(name: &str) -> Result<PathBuf, Error> {
-    let target_model = RembgModel::find_model(name);
-    match target_model {
-        Some(m) => {
-            let path = m.get_path()?;
-            if m.check_exists() {
-                Ok(path)
-            } else {
-                Err(Error::ModelNotFound(path.to_str().unwrap().to_owned()))
-            }
-        }
-        None => Err(Error::ModelNotFound(name.to_owned())),
     }
 }
