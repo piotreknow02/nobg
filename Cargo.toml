@@ -3,6 +3,13 @@ name = "nobg"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+cuda = ["ort/cuda"]
+rocm = ["ort/rocm"]
+coreml = ["ort/coreml"]
+directml = ["ort/directml"]
+
 [dependencies]
 axum = { version = "0.8", features = ["multipart"] }
 axum-embed = "0.1"
@@ -25,3 +32,8 @@ tokio = { version = "1", features = ["full"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["fs"] }
 url = "2.5.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

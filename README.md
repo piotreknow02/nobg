@@ -81,6 +81,4 @@ nobg webui --port 3000
 
 - [ ] alpha matting
 
-- [ ] acceleration 
-  
-  
+- [x] acceleration

@@ -11,12 +11,6 @@ pub enum Error {
     #[error("Failed to create session: {0}")]
     SessionError(#[from] ort::Error),
 
-    #[error("Failed to set optimization level: {0}")]
-    OptimizationError(String),
-
-    #[error("Failed to load model: {0}")]
-    ModelLoadError(String),
-
     #[error("Failed to convert output shape: {0}")]
     ShapeError(#[from] ndarray::ShapeError),
 

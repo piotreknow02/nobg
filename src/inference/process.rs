@@ -1,8 +1,8 @@
 use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use ndarray::{Array3, Array4};
-use ort::session::builder::GraphOptimizationLevel;
 use ort::value::Tensor;
 
+use crate::inference::acceleration::{build_session, get_backend_name};
 use crate::inference::error::Error;
 use crate::model::types::RembgModel;
 
@@ -16,12 +16,9 @@ pub fn run_inference(input: Array4<f32>, model_name: &str) -> Result<Array4<f32>
         return Err(Error::ModelNotFound(model_name.to_string()));
     }
 
-    let mut session = ort::session::Session::builder()
-        .map_err(|e| Error::SessionError(e))?
-        .with_optimization_level(GraphOptimizationLevel::Level1)
-        .map_err(|e| Error::OptimizationError(e.to_string()))?
-        .commit_from_file(&model_path)
-        .map_err(|e| Error::ModelLoadError(e.to_string()))?;
+    let backend = get_backend_name();
+
+    let mut session = build_session(&model_path, backend)?;
 
     let input_tensor = Tensor::from_array(input)?;
     let output_tensors = session.run(ort::inputs![input_tensor])?;
