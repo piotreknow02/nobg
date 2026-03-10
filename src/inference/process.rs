@@ -6,14 +6,11 @@ use crate::inference::acceleration::{build_session, get_backend_name};
 use crate::inference::error::Error;
 use crate::model::types::RembgModel;
 
-pub fn run_inference(input: Array4<f32>, model_name: &str) -> Result<Array4<f32>, Error> {
-    let model_info = RembgModel::find_model(model_name)
-        .ok_or_else(|| Error::ModelNotFound(model_name.to_string()))?;
-
+pub fn run_inference(input: Array4<f32>, model_info: &RembgModel) -> Result<Array4<f32>, Error> {
     let model_path = model_info.get_path()?;
 
     if !model_path.exists() {
-        return Err(Error::ModelNotFound(model_name.to_string()));
+        return Err(Error::ModelNotFound(model_info.name.to_owned()));
     }
 
     let backend = get_backend_name();
@@ -29,11 +26,18 @@ pub fn run_inference(input: Array4<f32>, model_name: &str) -> Result<Array4<f32>
     Ok(output_array)
 }
 
-pub fn read_input(path: &str) -> Result<(Array4<f32>, DynamicImage), Error> {
+pub fn read_input_and_resize(
+    path: &str,
+    model_resolution: (u32, u32),
+) -> Result<(Array4<f32>, DynamicImage), Error> {
     let img = image::open(path)?;
     let original = img.clone();
 
-    let resized_img = img.resize_exact(320, 320, image::imageops::FilterType::Lanczos3);
+    let resized_img = img.resize_exact(
+        model_resolution.0,
+        model_resolution.1,
+        image::imageops::FilterType::Lanczos3,
+    );
 
     let img_data: Vec<f32> = resized_img
         .to_rgb8()
@@ -41,14 +45,22 @@ pub fn read_input(path: &str) -> Result<(Array4<f32>, DynamicImage), Error> {
         .flat_map(|p| [p[0] as f32, p[1] as f32, p[2] as f32])
         .collect();
 
-    let img_array = Array3::from_shape_vec((320, 320, 3), img_data)?;
+    let img_array = Array3::from_shape_vec(
+        (model_resolution.1 as usize, model_resolution.0 as usize, 3),
+        img_data,
+    )?;
     let normalized_img = img_array.mapv(|x| x / 255.0);
 
-    let mut input_tensor = Array4::<f32>::zeros((1, 3, 320, 320));
+    let mut input_tensor = Array4::<f32>::zeros((
+        1,
+        3,
+        model_resolution.1 as usize,
+        model_resolution.0 as usize,
+    ));
 
     for c in 0..3 {
-        for h in 0..320 {
-            for w in 0..320 {
+        for h in 0..model_resolution.1 as usize {
+            for w in 0..model_resolution.0 as usize {
                 input_tensor[[0, c, h, w]] = normalized_img[[h, w, c]];
             }
         }
@@ -57,7 +69,12 @@ pub fn read_input(path: &str) -> Result<(Array4<f32>, DynamicImage), Error> {
     Ok((input_tensor, original))
 }
 
-pub fn save_output(data: Array4<f32>, original: DynamicImage, path: &str) -> Result<(), Error> {
+pub fn save_output(
+    data: Array4<f32>,
+    model_resolution: (u32, u32),
+    original: DynamicImage,
+    path: &str,
+) -> Result<(), Error> {
     let format = image::ImageFormat::from_path(path)?;
 
     let supports_transparency = matches!(
@@ -78,7 +95,7 @@ pub fn save_output(data: Array4<f32>, original: DynamicImage, path: &str) -> Res
     let orig_width = original.width();
     let orig_height = original.height();
 
-    let mask_image = ImageBuffer::from_fn(320, 320, |x, y| {
+    let mask_image = ImageBuffer::from_fn(model_resolution.0, model_resolution.1, |x, y| {
         let alpha = (mask[[0, 0, y as usize, x as usize]] * 255.0) as u8;
         Rgba([alpha, alpha, alpha, alpha])
     });

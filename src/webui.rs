@@ -8,7 +8,7 @@ use base64::Engine;
 use bytes::Bytes;
 use std::net::SocketAddr;
 
-use crate::inference::process::run_inference;
+use crate::inference::process::{read_input_and_resize, run_inference, save_output};
 use crate::model::registry::MODELS;
 use crate::model::types::RembgModel;
 use crate::webui_assets::Assets;
@@ -127,14 +127,21 @@ async fn remove_background(
 
     let _img = image::open(&input_path)
         .map_err(|e| ApiResponse::error(&format!("Failed to open image: {}", e)))?;
-    let (tensor, original) = prepare_input(&input_path.to_string_lossy())
-        .map_err(|e| ApiResponse::error(&format!("Failed to prepare input: {}", e)))?;
-    let mask = run_inference(tensor, &model_name)
+    let (tensor, original) =
+        read_input_and_resize(&input_path.to_string_lossy(), model_info.resolution)
+            .map_err(|e| ApiResponse::error(&format!("Failed to prepare input: {}", e)))?;
+    let mask = run_inference(tensor, model_info)
         .map_err(|e| ApiResponse::error(&format!("Inference error: {}", e)))?;
-    let result = apply_transparency(mask, original, &output_path.to_string_lossy())
-        .map_err(|e| ApiResponse::error(&format!("Failed to apply transparency: {}", e)));
+    let result = save_output(
+        mask,
+        model_info.resolution,
+        original,
+        &output_path.to_string_lossy(),
+    )
+    .map_err(|e| ApiResponse::error(&format!("Failed to apply transparency: {}", e)));
 
-    let _ = std::fs::remove_file(&input_path);
+    let _ = std::fs::remove_file(&input_path)
+        .map_err(|e| ApiResponse::error(&format!("Failed to remove a file: {}", e)));
 
     match result {
         Ok(()) => {
@@ -156,75 +163,6 @@ async fn remove_background(
         }
         Err(e) => Err(axum::Json(e)),
     }
-}
-
-fn prepare_input(
-    path: &str,
-) -> Result<(ndarray::Array4<f32>, image::DynamicImage), Box<dyn std::error::Error>> {
-    use ndarray::{Array3, Array4};
-
-    let img = image::open(path)?;
-    let original = img.clone();
-
-    let resized_img = img.resize_exact(320, 320, image::imageops::FilterType::Lanczos3);
-
-    let img_data: Vec<f32> = resized_img
-        .to_rgb8()
-        .pixels()
-        .flat_map(|p| [p[0] as f32, p[1] as f32, p[2] as f32])
-        .collect();
-
-    let img_array =
-        Array3::from_shape_vec((320, 320, 3), img_data).map_err(|e| format!("{}", e))?;
-
-    let normalized_img = img_array.mapv(|x| x / 255.0);
-
-    let mut input_tensor = Array4::<f32>::zeros((1, 3, 320, 320));
-
-    for c in 0..3 {
-        for h in 0..320 {
-            for w in 0..320 {
-                input_tensor[[0, c, h, w]] = normalized_img[[h, w, c]];
-            }
-        }
-    }
-
-    Ok((input_tensor, original))
-}
-
-fn apply_transparency(
-    data: ndarray::Array4<f32>,
-    original: image::DynamicImage,
-    path: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    use image::{ImageBuffer, Rgba, RgbaImage};
-
-    let mask = data.mapv(|x| x.max(0.0).min(1.0));
-
-    let orig_width = original.width();
-    let orig_height = original.height();
-
-    let mask_image = ImageBuffer::from_fn(320, 320, |x, y| {
-        let alpha = (mask[[0, 0, y as usize, x as usize]] * 255.0) as u8;
-        Rgba([alpha, alpha, alpha, alpha])
-    });
-
-    let resized_mask = image::imageops::resize(
-        &mask_image,
-        orig_width,
-        orig_height,
-        image::imageops::FilterType::Lanczos3,
-    );
-
-    let mut rgba_image: RgbaImage = original.to_rgba8();
-
-    for (mask_pixel, img_pixel) in resized_mask.pixels().zip(rgba_image.pixels_mut()) {
-        img_pixel[3] = mask_pixel[0];
-    }
-
-    rgba_image.save(path)?;
-
-    Ok(())
 }
 
 #[derive(serde::Serialize)]

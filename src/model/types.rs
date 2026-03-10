@@ -6,7 +6,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
-    fs::{metadata, File},
+    fs::{File, metadata},
     hint::unreachable_unchecked,
     io::{Read, Write},
     path::PathBuf,
@@ -18,6 +18,7 @@ use url::Url;
 #[derive(Debug)]
 pub struct RembgModel {
     pub name: &'static str,
+    pub resolution: (u32, u32),
     pub remote_url: &'static str,
     pub description: Option<&'static str>,
 }
