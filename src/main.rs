@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 use crate::{
-    cli::{ModelSumcommands, TopLevelSumbommands},
+    cli::{ModelSubcommands, TopLevelSubcommands},
     error::Error,
 };
 
@@ -17,26 +17,26 @@ mod webui_assets;
 fn main() -> Result<(), Error> {
     let args = cli::Args::parse();
     match args.cmd {
-        TopLevelSumbommands::Model { cmd } => model_subcommand(cmd),
-        TopLevelSumbommands::Run {
+        TopLevelSubcommands::Model { cmd } => model_subcommand(cmd),
+        TopLevelSubcommands::Run {
             model,
             input,
             output,
         } => run_model(model, input, output),
-        TopLevelSumbommands::Webui { port, expose } => run_webui(port, expose),
+        TopLevelSubcommands::Webui { port, expose } => run_webui(port, expose),
     }
 }
 
-fn model_subcommand(command: ModelSumcommands) -> Result<(), Error> {
+fn model_subcommand(command: ModelSubcommands) -> Result<(), Error> {
     let result = match command {
-        ModelSumcommands::Pull { names } => model::commands::pull(names),
-        ModelSumcommands::Rm { names } => model::commands::rm(names),
-        ModelSumcommands::Ls {
+        ModelSubcommands::Pull { names } => model::commands::pull(names),
+        ModelSubcommands::Rm { names } => model::commands::rm(names),
+        ModelSubcommands::Ls {
             verbose,
             all,
             quiet,
         } => Ok(model::commands::list(verbose, all, quiet)),
-        ModelSumcommands::Prune { yes } => Ok(model::commands::prune(yes)),
+        ModelSubcommands::Prune { yes } => Ok(model::commands::prune(yes)),
     };
     match result {
         Ok(_) => Ok(()),

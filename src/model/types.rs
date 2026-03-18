@@ -187,7 +187,7 @@ impl RembgModel {
         Self::create_config_if_not_exists()?;
 
         if self.check_exists() {
-            return Err(Error::ModelAllreadyDownloaded(self.name.to_owned()));
+            return Err(Error::ModelAlreadyDownloaded(self.name.to_owned()));
         }
 
         let client = Client::new();

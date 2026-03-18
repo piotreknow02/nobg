@@ -6,11 +6,11 @@ use std::path::PathBuf;
 #[command(version, about="A cli for rembg models", long_about = None)]
 pub struct Args {
     #[command(subcommand)]
-    pub cmd: TopLevelSumbommands,
+    pub cmd: TopLevelSubcommands,
 }
 
 #[derive(Subcommand, Debug)]
-pub enum TopLevelSumbommands {
+pub enum TopLevelSubcommands {
     Run {
         model: String,
         input: PathBuf,
@@ -18,7 +18,7 @@ pub enum TopLevelSumbommands {
     },
     Model {
         #[command(subcommand)]
-        cmd: ModelSumcommands,
+        cmd: ModelSubcommands,
     },
     Webui {
         #[clap(short, long, default_value_t = 8080)]
@@ -30,7 +30,7 @@ pub enum TopLevelSumbommands {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum ModelSumcommands {
+pub enum ModelSubcommands {
     Pull {
         names: Vec<String>,
     },

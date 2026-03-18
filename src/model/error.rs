@@ -6,7 +6,7 @@ pub enum Error {
     FailedToGetBaseDir,
 
     #[error("Model {0} has already been downloaded")]
-    ModelAllreadyDownloaded(String),
+    ModelAlreadyDownloaded(String),
 
     #[error("Request error: {0}")]
     ReqwestError(#[from] reqwest::Error),
