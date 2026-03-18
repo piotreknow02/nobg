@@ -6,7 +6,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
-    fs::{File, metadata},
+    fs::{metadata, File},
     hint::unreachable_unchecked,
     io::{Read, Write},
     path::PathBuf,
@@ -151,16 +151,20 @@ impl RembgModel {
         None
     }
 
-    pub fn print(&self, quiet: bool, verbose: bool) {
+    pub fn print(&self, quiet: bool, verbose: u8) {
         if quiet {
             self.print_quiet();
         } else {
-            if verbose {
-                self.print_verbose();
-            } else {
-                self.print_standard();
+            match verbose {
+                0 => self.print_default(),
+                1 => self.print_standard(),
+                _ => self.print_verbose(),
             }
         }
+    }
+
+    fn print_default(&self) {
+        println!("{}", self.name);
     }
 
     fn print_standard(&self) {

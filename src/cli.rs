@@ -38,8 +38,8 @@ pub enum ModelSumcommands {
         name: String,
     },
     Ls {
-        #[clap(short, long, action)]
-        verbose: bool,
+        #[clap(short = 'v', long, action = clap::ArgAction::Count)]
+        verbose: u8,
 
         #[clap(short, long, action)]
         all: bool,

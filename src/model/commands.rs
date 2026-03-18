@@ -1,6 +1,6 @@
 use crate::model::{error::Error, registry::MODELS, types::RembgModel};
 
-pub fn list(verbose: bool, all: bool, quiet: bool) {
+pub fn list(verbose: u8, all: bool, quiet: bool) {
     if all {
         for m in MODELS {
             m.print(quiet, verbose);
