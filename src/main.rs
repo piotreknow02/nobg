@@ -29,8 +29,8 @@ fn main() -> Result<(), Error> {
 
 fn model_subcommand(command: ModelSumcommands) -> Result<(), Error> {
     let result = match command {
-        ModelSumcommands::Pull { name } => model::commands::pull(name.as_str()),
-        ModelSumcommands::Rm { name } => model::commands::rm(name.as_str()),
+        ModelSumcommands::Pull { names } => model::commands::pull(names),
+        ModelSumcommands::Rm { names } => model::commands::rm(names),
         ModelSumcommands::Ls {
             verbose,
             all,

@@ -14,20 +14,36 @@ pub fn list(verbose: u8, all: bool, quiet: bool) {
     }
 }
 
-pub fn pull(name: &str) -> Result<(), Error> {
-    let target_model = RembgModel::find_model(name);
-    match target_model {
-        Some(m) => m.pull(),
-        None => Err(Error::ModelNotFound(name.to_owned())),
+pub fn pull(models: Vec<String>) -> Result<(), Error> {
+    for model_name in &models {
+        let target_model = RembgModel::find_model(model_name);
+        match target_model {
+            Some(m) => {
+                if let Err(e) = m.pull() {
+                    return Err(e);
+                }
+            }
+            None => return Err(Error::ModelNotFound(model_name.clone())),
+        }
     }
+
+    Ok(())
 }
 
-pub fn rm(name: &str) -> Result<(), Error> {
-    let target_model = RembgModel::find_model(name);
-    match target_model {
-        Some(m) => m.rm(),
-        None => Err(Error::ModelNotFound(name.to_owned())),
+pub fn rm(models: Vec<String>) -> Result<(), Error> {
+    for model_name in &models {
+        let target_model = RembgModel::find_model(model_name);
+        match target_model {
+            Some(m) => {
+                if let Err(e) = m.rm() {
+                    return Err(e);
+                }
+            }
+            None => return Err(Error::ModelNotFound(model_name.clone())),
+        }
     }
+
+    Ok(())
 }
 
 pub fn prune(yes: bool) {

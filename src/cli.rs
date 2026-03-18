@@ -32,10 +32,10 @@ pub enum TopLevelSumbommands {
 #[derive(Subcommand, Debug, Clone)]
 pub enum ModelSumcommands {
     Pull {
-        name: String,
+        names: Vec<String>,
     },
     Rm {
-        name: String,
+        names: Vec<String>,
     },
     Ls {
         #[clap(short = 'v', long, action = clap::ArgAction::Count)]
