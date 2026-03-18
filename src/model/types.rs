@@ -6,14 +6,12 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use std::{
-    fs::{metadata, File},
-    hint::unreachable_unchecked,
+    fs::{File, metadata},
     io::{Read, Write},
     path::PathBuf,
     sync::OnceLock,
     time::SystemTime,
 };
-use url::Url;
 
 #[derive(Debug)]
 pub struct RembgModel {
@@ -68,15 +66,7 @@ impl RembgModel {
     }
 
     fn get_filename(&self) -> String {
-        let parsed_url = match Url::parse(self.remote_url) {
-            Ok(u) => u,
-            Err(_) => unsafe { unreachable_unchecked() },
-        };
-        parsed_url
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .unwrap_or((self.name.to_owned() + ".onnx").as_ref())
-            .to_owned()
+        format!("{}{}", self.name, ".onnx")
     }
 
     fn get_download_time(&self) -> Option<String> {
