@@ -19,4 +19,7 @@ pub enum Error {
 
     #[error("Model not found: {0}")]
     ModelNotFound(String),
+
+    #[error("Model {0} checksum mismatch")]
+    ChecksumMismatch(String),
 }

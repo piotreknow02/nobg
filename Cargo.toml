@@ -27,6 +27,7 @@ reqwest = { version = "0.12.20", features = ["blocking"] }
 rust-embed = "8.11.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha2 = "0.10.9"
 thiserror = "2.0.12"
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
@@ -37,3 +38,6 @@ url = "2.5.4"
 opt-level = 3
 lto = true
 codegen-units = 1
+
+[dev-dependencies]
+futures = "0.3"

@@ -5,6 +5,7 @@ use fmtsize::{Conventional, FmtSize};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
+use sha2::{Digest, Sha256};
 use std::{
     fs::{File, metadata},
     io::{Read, Write},
@@ -13,12 +14,13 @@ use std::{
     time::SystemTime,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RembgModel {
     pub name: &'static str,
     pub resolution: (u32, u32),
     pub remote_url: &'static str,
     pub description: Option<&'static str>,
+    pub checksum: Option<&'static str>,
 }
 
 impl RembgModel {
@@ -187,10 +189,30 @@ impl RembgModel {
         Self::create_config_if_not_exists()?;
 
         if self.check_exists() {
+            let file_path = self.get_path()?;
+            if !self.check_checksum()? {
+                eprintln!(
+                    "Checksum mismatch for model {}, removing corrupted file and re-downloading...",
+                    self.name
+                );
+                std::fs::remove_file(&file_path)?;
+                let _output_path = self.download_and_verify()?;
+                return Ok(());
+            }
             return Err(Error::ModelAlreadyDownloaded(self.name.to_owned()));
         }
 
+        let _output_path = self.download_and_verify()?;
+
+        Ok(())
+    }
+
+    fn download_and_verify(&self) -> Result<PathBuf, Error> {
         let client = Client::new();
+        let output_path = self.get_path()?;
+        let mut downloaded: u64 = 0;
+        let mut buffer = [0; 8192];
+
         let mut response = match client.get(self.remote_url).send() {
             Ok(res) => res,
             Err(e) => return Err(Error::ReqwestError(e)),
@@ -211,15 +233,11 @@ impl RembgModel {
                     .progress_chars("#>-"),
             );
 
-        let output_path = self.get_path()?;
-        let mut file = File::create(output_path)?;
-        let mut downloaded: u64 = 0;
-        let mut buffer = [0; 8192];
-
         while let Ok(n) = response.read(&mut buffer) {
             if n == 0 {
                 break;
             }
+            let mut file = File::create(&output_path)?;
             file.write_all(&buffer[..n])?;
             downloaded += n as u64;
             pb.set_position(downloaded);
@@ -227,18 +245,57 @@ impl RembgModel {
 
         pb.finish_with_message("Download complete");
 
-        Ok(())
+        let checksum_valid = self.check_checksum()?;
+        if !checksum_valid {
+            std::fs::remove_file(&output_path)?;
+            eprintln!(
+                "Checksum mismatch for model {}, removing corrupted file and re-downloading...",
+                self.name
+            );
+            let _output_path = self.download_and_verify()?;
+            return Ok(_output_path);
+        }
+
+        Ok(output_path)
+    }
+
+    pub fn check_checksum(&self) -> Result<bool, Error> {
+        let expected_checksum = match self.checksum {
+            Some(c) => c,
+            None => {
+                eprintln!(
+                    "[WARN] No checksum provided for model {}, skipping verification",
+                    self.name
+                );
+                return Ok(true);
+            }
+        };
+        let path = self.get_path()?;
+        let mut file = File::open(path)?;
+        let mut hasher = Sha256::new();
+        let mut buffer = [0; 8192];
+
+        loop {
+            match file.read(&mut buffer) {
+                Ok(0) => break,
+                Ok(n) => hasher.update(&buffer[..n]),
+                Err(e) => return Err(Error::ModelIOError(e)),
+            }
+        }
+
+        let calculated_checksum = format!("{:x}", hasher.finalize());
+        Ok(calculated_checksum.eq_ignore_ascii_case(expected_checksum))
     }
 
     pub fn rm(&self) -> Result<(), Error> {
         let model_path = self.get_path()?;
         match std::fs::remove_file(&model_path) {
-            Ok(_) => {
+            Ok(()) => {
                 println!("Model {} was removed", self.name);
                 Ok(())
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Error::ModelNotFound(
-                model_path.to_str().unwrap().to_owned(),
+                model_path.to_string_lossy().to_string(),
             )),
             Err(e) => Err(Error::ModelIOError(e)),
         }

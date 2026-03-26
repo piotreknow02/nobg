@@ -18,11 +18,11 @@ pub fn pull(models: Vec<String>) -> Result<(), Error> {
     for model_name in &models {
         let target_model = RembgModel::find_model(model_name);
         match target_model {
-            Some(m) => {
-                if let Err(e) = m.pull() {
-                    return Err(e);
-                }
-            }
+            Some(m) => match m.pull() {
+                Err(Error::ModelAlreadyDownloaded(_)) => continue,
+                Err(e) => return Err(e),
+                Ok(()) => {}
+            },
             None => return Err(Error::ModelNotFound(model_name.clone())),
         }
     }
