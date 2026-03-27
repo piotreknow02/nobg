@@ -6,7 +6,7 @@ pub const MODELS: &[RembgModel] = &[
         resolution: (320, 320),
         remote_url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx",
         description: Some("A pre-trained model for general use cases"),
-        checksum: Some("8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"),
+        checksum: Some("8d10d2f3bb75ae5b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"),
     },
     RembgModel {
         name: "u2netp",

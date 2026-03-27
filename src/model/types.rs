@@ -11,8 +11,11 @@ use std::{
     io::{Read, Write},
     path::PathBuf,
     sync::OnceLock,
+    sync::atomic::{AtomicU8, Ordering},
     time::SystemTime,
 };
+
+static DOWNLOAD_RETRIES: AtomicU8 = AtomicU8::new(0);
 
 #[derive(Debug, Clone)]
 pub struct RembgModel {
@@ -185,7 +188,7 @@ impl RembgModel {
     }
 
     pub fn pull(&self) -> Result<(), Error> {
-        static mut RETRIES: u8 = 0;
+        DOWNLOAD_RETRIES.store(1, Ordering::SeqCst);
         println!("Pulling model {}...", self.name);
         Self::create_config_if_not_exists()?;
 
@@ -197,12 +200,6 @@ impl RembgModel {
                     self.name
                 );
                 std::fs::remove_file(&file_path)?;
-                unsafe {
-                    RETRIES += 1;
-                    if RETRIES > 3 {
-                        return Err(Error::ChecksumMismatch(self.name.to_owned()));
-                    }
-                }
                 return self.pull();
             }
             return Err(Error::ModelAlreadyDownloaded(self.name.to_owned()));
@@ -258,6 +255,10 @@ impl RembgModel {
                 "Checksum mismatch for model {}, removing corrupted file and re-downloading...",
                 self.name
             );
+            let retries = DOWNLOAD_RETRIES.fetch_add(1, Ordering::SeqCst) + 1;
+            if retries > 3 {
+                return Err(Error::ChecksumMismatch(self.name.to_owned()));
+            }
             let _output_path = self.download_and_verify()?;
             return Ok(_output_path);
         }
