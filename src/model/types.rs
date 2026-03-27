@@ -185,6 +185,7 @@ impl RembgModel {
     }
 
     pub fn pull(&self) -> Result<(), Error> {
+        static mut RETRIES: u8 = 0;
         println!("Pulling model {}...", self.name);
         Self::create_config_if_not_exists()?;
 
@@ -196,8 +197,13 @@ impl RembgModel {
                     self.name
                 );
                 std::fs::remove_file(&file_path)?;
-                let _output_path = self.download_and_verify()?;
-                return Ok(());
+                unsafe {
+                    RETRIES += 1;
+                    if RETRIES > 3 {
+                        return Err(Error::ChecksumMismatch(self.name.to_owned()));
+                    }
+                }
+                return self.pull();
             }
             return Err(Error::ModelAlreadyDownloaded(self.name.to_owned()));
         }
