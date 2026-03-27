@@ -1,5 +1,6 @@
 use crate::model::{error::Error, registry::MODELS};
 use chrono::{DateTime, Local};
+use colored::Colorize;
 use directories::BaseDirs;
 use fmtsize::{Conventional, FmtSize};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -252,8 +253,11 @@ impl RembgModel {
         if !checksum_valid {
             std::fs::remove_file(&output_path)?;
             eprintln!(
-                "Checksum mismatch for model {}, removing corrupted file and re-downloading...",
-                self.name
+                "{}",
+                format!(
+                    "[WARN] Checksum mismatch for model {}, removing corrupted file and re-downloading...",
+                    self.name
+                ).yellow(),
             );
             let retries = DOWNLOAD_RETRIES.fetch_add(1, Ordering::SeqCst) + 1;
             if retries > 3 {
@@ -271,8 +275,12 @@ impl RembgModel {
             Some(c) => c,
             None => {
                 eprintln!(
-                    "[WARN] No checksum provided for model {}, skipping verification",
-                    self.name
+                    "{}",
+                    format!(
+                        "[WARN] No checksum provided for model {}, skipping verification",
+                        self.name
+                    )
+                    .yellow(),
                 );
                 return Ok(true);
             }
