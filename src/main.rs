@@ -54,7 +54,7 @@ fn run_model(model: String, input: PathBuf, output: PathBuf) -> Result<(), Error
 
 fn run_webui(port: u16, _expose: bool) -> Result<(), Error> {
     tokio::runtime::Runtime::new()
-        .map_err(|e| Error::WebUIError(format!("Failed to create runtime: {}", e)))?
+        .map_err(|e| Error::WebUi(format!("Failed to create runtime: {}", e)))?
         .block_on(webui::start(port))
-        .map_err(|e| Error::WebUIError(format!("WebUI error: {}", e)))
+        .map_err(|e| Error::WebUi(format!("WebUI error: {}", e)))
 }

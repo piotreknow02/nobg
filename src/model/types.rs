@@ -53,7 +53,7 @@ impl RembgModel {
     fn create_config_if_not_exists() -> Result<(), Error> {
         let config_dir = Self::get_config_dir()?;
         if !config_dir.exists() {
-            std::fs::create_dir_all(&config_dir)?;
+            std::fs::create_dir_all(config_dir)?;
         }
         Ok(())
     }
@@ -139,12 +139,7 @@ impl RembgModel {
     }
 
     pub fn find_model(name: &str) -> Option<&Self> {
-        for m in MODELS {
-            if m.name == name {
-                return Some(m);
-            }
-        }
-        None
+        MODELS.iter().find(|&m| m.name == name).map(|v| v as _)
     }
 
     pub fn print(&self, quiet: bool, verbose: u8) {
@@ -219,7 +214,7 @@ impl RembgModel {
 
         let mut response = match client.get(self.remote_url).send() {
             Ok(res) => res,
-            Err(e) => return Err(Error::ReqwestError(e)),
+            Err(e) => return Err(Error::Reqwest(e)),
         };
 
         let total_size = response
@@ -294,7 +289,7 @@ impl RembgModel {
             match file.read(&mut buffer) {
                 Ok(0) => break,
                 Ok(n) => hasher.update(&buffer[..n]),
-                Err(e) => return Err(Error::ModelIOError(e)),
+                Err(e) => return Err(Error::ModelIO(e)),
             }
         }
 
@@ -312,7 +307,7 @@ impl RembgModel {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Error::ModelNotFound(
                 model_path.to_string_lossy().to_string(),
             )),
-            Err(e) => Err(Error::ModelIOError(e)),
+            Err(e) => Err(Error::ModelIO(e)),
         }
     }
 }

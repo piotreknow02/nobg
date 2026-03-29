@@ -87,10 +87,10 @@ pub fn save_output(
     );
 
     if !supports_transparency {
-        return Err(Error::OutputFormatError);
+        return Err(Error::OutputFormat);
     }
 
-    let mask = data.mapv(|x| x.max(0.0).min(1.0));
+    let mask = data.mapv(|x| x.clamp(0.0, 1.0));
 
     let orig_width = original.width();
     let orig_height = original.height();

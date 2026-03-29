@@ -34,11 +34,7 @@ pub fn rm(models: Vec<String>) -> Result<(), Error> {
     for model_name in &models {
         let target_model = RembgModel::find_model(model_name);
         match target_model {
-            Some(m) => {
-                if let Err(e) = m.rm() {
-                    return Err(e);
-                }
-            }
+            Some(m) => m.rm()?,
             None => return Err(Error::ModelNotFound(model_name.clone())),
         }
     }

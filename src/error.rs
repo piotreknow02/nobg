@@ -12,7 +12,7 @@ pub enum Error {
     InferenceError(#[from] InferenceError),
 
     #[error("Web UI error: {0}")]
-    WebUIError(String),
+    WebUi(String),
 
     #[error("Model not found: {0}")]
     ModelNotFound(String),

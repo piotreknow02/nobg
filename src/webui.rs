@@ -52,10 +52,10 @@ async fn remove_background(
         let name = field.name().unwrap_or("").to_string();
 
         if name == "model" {
-            if let Ok(text) = field.text().await {
-                if !text.is_empty() {
-                    model_name = Some(text);
-                }
+            if let Ok(text) = field.text().await
+                && !text.is_empty()
+            {
+                model_name = Some(text);
             }
         } else if name == "image" {
             let ct = field.content_type().unwrap_or("image/png");

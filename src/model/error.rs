@@ -9,13 +9,13 @@ pub enum Error {
     ModelAlreadyDownloaded(String),
 
     #[error("Request error: {0}")]
-    ReqwestError(#[from] reqwest::Error),
+    Reqwest(#[from] reqwest::Error),
 
     #[error("Cannot save model in {0}")]
-    ModelIOError(#[from] std::io::Error),
+    ModelIO(#[from] std::io::Error),
 
     #[error("Cannot parse url: {0}")]
-    ParseError(#[from] url::ParseError),
+    Parse(#[from] url::ParseError),
 
     #[error("Model not found: {0}")]
     ModelNotFound(String),
