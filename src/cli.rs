@@ -11,31 +11,17 @@ pub struct Args {
 
 #[derive(Subcommand, Debug)]
 pub enum TopLevelSubcommands {
+    Pull {
+        models: Vec<String>,
+    },
     Run {
         model: String,
         input: PathBuf,
-        output: PathBuf,
-    },
-    Model {
-        #[command(subcommand)]
-        cmd: ModelSubcommands,
-    },
-    Webui {
-        #[clap(short, long, default_value_t = 8080)]
-        port: u16,
-
-        #[clap(short, long, action)]
-        expose: bool,
-    },
-}
-
-#[derive(Subcommand, Debug, Clone)]
-pub enum ModelSubcommands {
-    Pull {
-        names: Vec<String>,
+        #[clap(short, long)]
+        output: Option<PathBuf>,
     },
     Rm {
-        names: Vec<String>,
+        models: Vec<String>,
     },
     Ls {
         #[clap(short = 'v', long, action = clap::ArgAction::Count)]
@@ -50,5 +36,12 @@ pub enum ModelSubcommands {
     Prune {
         #[clap(short, long, action)]
         yes: bool,
+    },
+    Webui {
+        #[clap(short, long, default_value_t = 8080)]
+        port: u16,
+
+        #[clap(short, long, action)]
+        expose: bool,
     },
 }

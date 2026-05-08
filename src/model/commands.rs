@@ -1,6 +1,6 @@
 use crate::model::{error::Error, registry::MODELS, types::RembgModel};
 
-pub fn list(verbose: u8, all: bool, quiet: bool) {
+pub fn list(verbose: u8, all: bool, quiet: bool) -> Result<(), Error> {
     if all {
         for m in MODELS {
             m.print(quiet, verbose);
@@ -12,6 +12,7 @@ pub fn list(verbose: u8, all: bool, quiet: bool) {
             }
         }
     }
+    Ok(())
 }
 
 pub fn pull(models: Vec<String>) -> Result<(), Error> {
@@ -42,18 +43,19 @@ pub fn rm(models: Vec<String>) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn prune(yes: bool) {
+pub fn prune(yes: bool) -> Result<(), Error> {
     if !yes {
         println!("This will remove all downloaded models. Would you like to continue? [y/N]");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).ok();
         if !input.trim().eq_ignore_ascii_case("y") {
             println!("Aborted.");
-            return;
+            return Ok(());
         }
     }
 
     for m in MODELS {
         let _ = m.rm();
     }
+    Ok(())
 }
