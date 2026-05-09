@@ -28,19 +28,27 @@ For management `nobg` uses docker-like commands
 List available models:
 
 ```bash
-nobg model ls
+nobg ls
 ```
 
-Download a model:
+Download one or more models:
 
 ```bash
-nobg model pull silueta
+nobg pull silueta
+nobg pull model1 model2
 ```
 
-Remove a model:
+Remove one or more models:
 
 ```bash
-nobg model rm silueta
+nobg rm silueta
+nobg rm model1 model2
+```
+
+Prune all downloaded models:
+
+```bash
+nobg prune -y
 ```
 
 ### CLI
@@ -49,6 +57,13 @@ Remove background from an image:
 
 ```bash
 nobg run silueta input.png output.png
+```
+
+Output to a prefixed filename (omitting output):
+
+```bash
+nobg run silueta input.png
+# Saves as: input_nobg.png
 ```
 
 ### WebUI
