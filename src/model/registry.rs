@@ -6,14 +6,14 @@ pub const MODELS: &[RembgModel] = &[
         resolution: (320, 320),
         remote_url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx",
         description: Some("A pre-trained model for general use cases"),
-        checksum: Some("8d10d2f3bb75ae5b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"),
+        checksum: Some("8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491"),
     },
     RembgModel {
         name: "u2netp",
         resolution: (768, 768),
         remote_url: "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx",
         description: Some("A lightweight version of u2net model"),
-        checksum: Some("988311b63e23adc2596e7f5d4d1c28cd301b1641b2a211c3168f1896f96ee8da"),
+        checksum: Some("309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8"),
     },
     RembgModel {
         name: "u2net_human_seg",

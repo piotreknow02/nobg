@@ -232,11 +232,11 @@ impl RembgModel {
                     .progress_chars("#>-"),
             );
 
+        let mut file = File::create(&output_path)?;
         while let Ok(n) = response.read(&mut buffer) {
             if n == 0 {
                 break;
             }
-            let mut file = File::create(&output_path)?;
             file.write_all(&buffer[..n])?;
             downloaded += n as u64;
             pb.set_position(downloaded);
